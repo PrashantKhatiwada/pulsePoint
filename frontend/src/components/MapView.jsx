@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +24,11 @@ function CustomZoomControl() {
 
   return (
     <div className="leaflet-top leaflet-right" style={{ zIndex: 1000 }}>
-      <div className="leaflet-control leaflet-bar flex flex-col bg-white shadow-md rounded-md overflow-hidden m-2">
+      <div className="leaflet-control leaflet-bar flex flex-col bg-background shadow-md rounded-md overflow-hidden m-2">
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-none border-b hover:bg-gray-100"
+          className="h-10 w-10 rounded-none border-b hover:bg-muted"
           onClick={handleZoomIn}
           title="Zoom in"
         >
@@ -37,7 +37,7 @@ function CustomZoomControl() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-none border-b hover:bg-gray-100"
+          className="h-10 w-10 rounded-none border-b hover:bg-muted"
           onClick={handleZoomOut}
           title="Zoom out"
         >
@@ -46,7 +46,7 @@ function CustomZoomControl() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-10 w-10 rounded-none hover:bg-gray-100"
+          className="h-10 w-10 rounded-none hover:bg-muted"
           onClick={handleLocateMe}
           title="Find my location"
         >
@@ -66,6 +66,31 @@ function RecenterMap({ position }) {
       map.setView(position, map.getZoom());
     }
   }, [position, map]);
+
+  return null;
+}
+
+// Component to fix map rendering issues
+function MapFixer() {
+  const map = useMap();
+
+  useEffect(() => {
+    // Force a map invalidation and redraw after component mounts
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
+    // Also invalidate on window resize
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [map]);
 
   return null;
 }
@@ -94,6 +119,7 @@ const createCustomIcon = (category) => {
 function MapView({ reports, loading, onReportSelect }) {
   const [userLocation, setUserLocation] = useState(null);
   const defaultPosition = [40.7128, -74.006]; // Default to NYC
+  const mapRef = useRef(null);
 
   useEffect(() => {
     // Get user's location
@@ -143,7 +169,7 @@ function MapView({ reports, loading, onReportSelect }) {
   };
 
   return (
-    <div className="map-container">
+    <div className="map-wrapper">
       <MapContainer
         center={userLocation || defaultPosition}
         zoom={13}
@@ -151,14 +177,21 @@ function MapView({ reports, loading, onReportSelect }) {
         zoomControl={false} // Disable default zoom control
         attributionControl={true}
         doubleClickZoom={true}
-        className="map-element"
+        className="map-container"
+        ref={mapRef}
+        preferCanvas={true}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
-          keepBuffer={8}
+          updateWhenIdle={false}
+          updateWhenZooming={false}
+          tileSize={256}
         />
+
+        {/* Map fixer component */}
+        <MapFixer />
 
         {userLocation && <RecenterMap position={userLocation} />}
 

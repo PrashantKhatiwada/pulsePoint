@@ -164,8 +164,8 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
   };
 
   return (
-    <Card className="border-0 rounded-none h-full flex flex-col">
-      <CardHeader className="bg-primary text-primary-foreground">
+    <Card className="border-0 rounded-none h-full flex flex-col mt-4">
+      <CardHeader className="bg-primary text-primary-foreground py-2">
         <CardTitle>Report a Crisis</CardTitle>
         <CardDescription className="text-primary-foreground/80">
           Step {step} of 3:{" "}

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import MapView from "./components/MapView";
 import ReportForm from "./components/ReportForm";
@@ -21,6 +23,16 @@ function App() {
 
   useEffect(() => {
     loadReports();
+
+    // Force a resize event to help the map render correctly
+    window.dispatchEvent(new Event("resize"));
+
+    // Additional resize event after a delay to ensure map renders properly
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const loadReports = async () => {
@@ -201,33 +213,6 @@ function App() {
                 <MapPin className="h-4 w-4 text-primary-foreground" />
               </div>
               <span className="font-semibold">PulsePoint</span>
-            </div>
-
-            <div className="flex space-x-6">
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                About
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Privacy
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Terms
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Contact
-              </a>
             </div>
 
             <div className="text-sm text-muted-foreground">
