@@ -30,12 +30,16 @@ const CATEGORIES = [
   { id: "other", label: "Other", icon: "❓" },
 ];
 
+const URGENCIES = ["Low", "Medium", "High", "Critical"];
+
 function ReportForm({ onReportAdded, onCancel, selectedReport }) {
   const [formData, setFormData] = useState({
     description: "",
     category: "Other",
+    locationText: "",
     latitude: "",
     longitude: "",
+    urgency: "Medium",
   });
   const [loading, setLoading] = useState(false);
   const [useCurrentLocation, setUseCurrentLocation] = useState(true);
@@ -44,25 +48,24 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
   const [progress, setProgress] = useState(33);
 
   useEffect(() => {
-    // If a report is selected, populate the form with its data
     if (selectedReport) {
       setFormData({
         description: selectedReport.description,
         category: selectedReport.category,
+        locationText: selectedReport.locationText,
         latitude: selectedReport.latitude,
         longitude: selectedReport.longitude,
+        urgency: selectedReport.urgency || "Medium",
       });
       setUseCurrentLocation(false);
       setStep(1);
       setProgress(33);
     } else {
-      // Otherwise, try to get the user's current location
       getCurrentLocation();
     }
   }, [selectedReport]);
 
   useEffect(() => {
-    // Update progress based on step
     setProgress(step * 33);
   }, [step]);
 
@@ -80,16 +83,12 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
         },
         (error) => {
           console.error("Error getting location:", error);
-          setLocationError(
-            "Unable to get your current location. Please enter coordinates manually."
-          );
+          setLocationError("Unable to get your current location. Please enter manually.");
           setUseCurrentLocation(false);
         }
       );
     } else {
-      setLocationError(
-        "Geolocation is not supported by your browser. Please enter coordinates manually."
-      );
+      setLocationError("Geolocation not supported. Please enter manually.");
       setUseCurrentLocation(false);
     }
   };
@@ -114,28 +113,22 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
     setStep(step + 1);
   };
 
-  const prevStep = () => {
-    setStep(step - 1);
-  };
+  const prevStep = () => setStep(step - 1);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       setLoading(true);
 
-      // Validate form
-      if (!formData.description.trim()) {
-        toast.error("Please provide a description");
+      if (!formData.description.trim() || !formData.locationText.trim()) {
+        toast.error("Please fill all required fields");
         return;
       }
-
       if (!formData.latitude || !formData.longitude) {
         toast.error("Location coordinates are required");
         return;
       }
 
-      // Convert string coordinates to numbers
       const reportData = {
         ...formData,
         latitude: Number.parseFloat(formData.latitude),
@@ -144,14 +137,15 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
 
       const newReport = await createReport(reportData);
       onReportAdded(newReport);
-      toast.success("Crisis report submitted successfully");
+      toast.success("Crisis report submitted successfully!");
 
-      // Reset form
       setFormData({
         description: "",
         category: "Other",
+        locationText: "",
         latitude: "",
         longitude: "",
+        urgency: "Medium",
       });
       setStep(1);
       setProgress(33);
@@ -168,43 +162,25 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
       <CardHeader className="bg-primary text-primary-foreground py-2">
         <CardTitle>Report a Crisis</CardTitle>
         <CardDescription className="text-primary-foreground/80">
-          Step {step} of 3:{" "}
-          {step === 1 ? "Category" : step === 2 ? "Description" : "Location"}
+          Step {step} of 3: {step === 1 ? "Category" : step === 2 ? "Description" : "Location Details"}
         </CardDescription>
-        <Progress
-          value={progress}
-          className="h-1 mt-2 bg-primary-foreground/20"
-        />
+        <Progress value={progress} className="h-1 mt-2 bg-primary-foreground/20" />
       </CardHeader>
 
       <CardContent className="flex-1 overflow-auto pt-6">
         <form id="report-form" onSubmit={handleSubmit}>
-          {/* Step 1: Category Selection */}
+          {/* Step 1: Category */}
           {step === 1 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
-            >
-              <div className="text-sm text-muted-foreground mb-4">
-                Select the category that best describes the crisis:
-              </div>
-
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+              <div className="text-sm text-muted-foreground mb-4">Select the type of crisis:</div>
               <RadioGroup
                 defaultValue={formData.category}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, category: value })
-                }
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
                 className="grid grid-cols-2 gap-4"
               >
                 {CATEGORIES.map((category) => (
                   <div key={category.id}>
-                    <RadioGroupItem
-                      value={category.label}
-                      id={category.id}
-                      className="peer sr-only"
-                    />
+                    <RadioGroupItem value={category.label} id={category.id} className="peer sr-only" />
                     <Label
                       htmlFor={category.id}
                       className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
@@ -220,49 +196,34 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
 
           {/* Step 2: Description */}
           {step === 2 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Describe the crisis situation in detail..."
-                  className="min-h-[150px]"
-                  required
-                />
-              </div>
-
-              <div className="flex items-center p-3 bg-muted/50 rounded-lg">
-                <div className="text-2xl mr-3">
-                  {CATEGORIES.find((c) => c.label === formData.category)
-                    ?.icon || "❓"}
-                </div>
-                <div>
-                  <div className="font-medium">{formData.category}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Selected category
-                  </div>
-                </div>
-              </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Describe the crisis situation..."
+                className="min-h-[150px]"
+                required
+              />
             </motion.div>
           )}
 
-          {/* Step 3: Location */}
+          {/* Step 3: Location Info */}
           {step === 3 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
-            >
-              <div className="flex items-center space-x-2">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+              <Label htmlFor="locationText">Location (City, Street, Landmark)</Label>
+              <Input
+                id="locationText"
+                name="locationText"
+                value={formData.locationText}
+                onChange={handleChange}
+                placeholder="E.g., Main Street, New York"
+                required
+              />
+
+              <div className="flex items-center space-x-2 mt-4">
                 <Checkbox
                   id="useCurrentLocation"
                   checked={useCurrentLocation}
@@ -271,9 +232,7 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
                     if (checked) getCurrentLocation();
                   }}
                 />
-                <Label htmlFor="useCurrentLocation">
-                  Use my current location
-                </Label>
+                <Label htmlFor="useCurrentLocation">Use my current location</Label>
               </div>
 
               {locationError && (
@@ -285,62 +244,32 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
 
               {!useCurrentLocation && (
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div>
                     <Label htmlFor="latitude">Latitude</Label>
-                    <Input
-                      id="latitude"
-                      name="latitude"
-                      type="number"
-                      step="any"
-                      value={formData.latitude}
-                      onChange={handleChange}
-                      required
-                    />
+                    <Input id="latitude" name="latitude" type="number" step="any" value={formData.latitude} onChange={handleChange} required />
                   </div>
-                  <div className="space-y-2">
+                  <div>
                     <Label htmlFor="longitude">Longitude</Label>
-                    <Input
-                      id="longitude"
-                      name="longitude"
-                      type="number"
-                      step="any"
-                      value={formData.longitude}
-                      onChange={handleChange}
-                      required
-                    />
+                    <Input id="longitude" name="longitude" type="number" step="any" value={formData.longitude} onChange={handleChange} required />
                   </div>
                 </div>
               )}
 
+              <Label htmlFor="urgency" className="block mt-4">Urgency</Label>
+              <select
+                name="urgency"
+                value={formData.urgency}
+                onChange={handleChange}
+                className="border p-3 rounded-lg w-full"
+              >
+                {URGENCIES.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </select>
+
               <Separator className="my-4" />
-
-              <div className="bg-muted/50 p-4 rounded-lg space-y-3">
-                <div className="text-sm font-medium">Report Summary</div>
-
-                <div className="flex items-center">
-                  <div className="text-2xl mr-3">
-                    {CATEGORIES.find((c) => c.label === formData.category)
-                      ?.icon || "❓"}
-                  </div>
-                  <div className="font-medium">{formData.category}</div>
-                </div>
-
-                <div className="text-sm">
-                  {formData.description.length > 100
-                    ? `${formData.description.substring(0, 100)}...`
-                    : formData.description}
-                </div>
-
-                {formData.latitude && formData.longitude && (
-                  <div className="flex items-center text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3 mr-1" />
-                    <span>
-                      {Number(formData.latitude).toFixed(4)},{" "}
-                      {Number(formData.longitude).toFixed(4)}
-                    </span>
-                  </div>
-                )}
-              </div>
             </motion.div>
           )}
         </form>
@@ -348,15 +277,10 @@ function ReportForm({ onReportAdded, onCancel, selectedReport }) {
 
       <CardFooter className="flex justify-between border-t p-4">
         {step > 1 ? (
-          <Button variant="outline" onClick={prevStep}>
-            Back
-          </Button>
+          <Button variant="outline" onClick={prevStep}>Back</Button>
         ) : (
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
+          <Button variant="outline" onClick={onCancel}>Cancel</Button>
         )}
-
         {step < 3 ? (
           <Button onClick={nextStep}>Next</Button>
         ) : (

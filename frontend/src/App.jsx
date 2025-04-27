@@ -24,10 +24,7 @@ function App() {
   useEffect(() => {
     loadReports();
 
-    // Force a resize event to help the map render correctly
     window.dispatchEvent(new Event("resize"));
-
-    // Additional resize event after a delay to ensure map renders properly
     const timer = setTimeout(() => {
       window.dispatchEvent(new Event("resize"));
     }, 500);
@@ -48,7 +45,7 @@ function App() {
   };
 
   const handleReportAdded = (newReport) => {
-    setReports((prevReports) => [newReport, ...prevReports]);
+    setReports((prevReports) => [newReport.data, ...prevReports]); // 🛠️ important fix!
     setIsFormOpen(false);
   };
 
@@ -107,9 +104,9 @@ function App() {
         </div>
       </header>
 
-      {/* Main content */}
+      {/* Main Content */}
       <div className="flex-1 relative">
-        {/* Map View - always visible and fills the screen */}
+        {/* Map View */}
         <div className="h-full w-full">
           <MapView
             reports={reports}
@@ -118,7 +115,7 @@ function App() {
           />
         </div>
 
-        {/* Mobile Tabs (visible on small screens) */}
+        {/* Mobile Tabs */}
         <div className="md:hidden absolute top-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-b z-10">
           <Tabs
             defaultValue="map"
@@ -133,7 +130,7 @@ function App() {
           </Tabs>
         </div>
 
-        {/* Mobile List View (shows instead of map on mobile when selected) */}
+        {/* Mobile List View */}
         <div
           className={`absolute inset-0 bg-background z-20 ${
             activeTab === "map" ? "hidden" : "block md:hidden"
@@ -146,7 +143,7 @@ function App() {
           />
         </div>
 
-        {/* Floating action button - always visible */}
+        {/* Floating Action Button */}
         <motion.div
           className="absolute bottom-6 right-6 z-40"
           whileHover={{ scale: 1.05 }}
@@ -165,7 +162,7 @@ function App() {
           </Button>
         </motion.div>
 
-        {/* Report form sheet - appears as overlay */}
+        {/* Report Form */}
         <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
           <SheetContent
             side="left"
@@ -179,7 +176,7 @@ function App() {
           </SheetContent>
         </Sheet>
 
-        {/* Reports sidebar sheet - appears as overlay */}
+        {/* Reports Sidebar */}
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <SheetContent
             side="right"
@@ -204,7 +201,7 @@ function App() {
         )}
       </div>
 
-      {/* Enhanced Footer */}
+      {/* Footer */}
       <footer className="border-t py-4 bg-card">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -223,6 +220,7 @@ function App() {
         </div>
       </footer>
 
+      {/* Toaster */}
       <Toaster position="top-right" />
     </div>
   );

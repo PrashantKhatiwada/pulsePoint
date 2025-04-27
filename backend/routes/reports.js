@@ -10,22 +10,12 @@ const router = express.Router();
  */
 router.get("/reports", async (req, res) => {
   try {
-    // Optional query parameters for filtering
     const { category, status, days } = req.query;
 
     const query = {};
 
-    // Filter by category if provided
-    if (category) {
-      query.category = category;
-    }
-
-    // Filter by status if provided
-    if (status) {
-      query.status = status;
-    }
-
-    // Filter by date range if provided
+    if (category) query.category = category;
+    if (status) query.status = status;
     if (days) {
       const daysAgo = new Date();
       daysAgo.setDate(daysAgo.getDate() - Number.parseInt(days));
@@ -56,23 +46,18 @@ router.get("/reports", async (req, res) => {
  */
 router.post("/report", async (req, res) => {
   try {
-    const { description, latitude, longitude, category } = req.body;
+    const { category, description, locationText, latitude, longitude, urgency } = req.body;
 
     // Validate required fields
-    if (!description || !latitude || !longitude) {
+    if (!category || !description || !locationText || latitude === undefined || longitude === undefined || !urgency) {
       return res.status(400).json({
         success: false,
-        message: "Please provide description, latitude, and longitude",
+        message: "Please provide category, description, location, coordinates, and urgency",
       });
     }
 
     // Validate coordinates
-    if (
-      latitude < -90 ||
-      latitude > 90 ||
-      longitude < -180 ||
-      longitude > 180
-    ) {
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
       return res.status(400).json({
         success: false,
         message: "Invalid coordinates",
@@ -81,20 +66,22 @@ router.post("/report", async (req, res) => {
 
     // Create new report
     const newReport = await Report.create({
+      title: category, // 👈 Here we use category as title!
       description,
+      locationText,
       latitude,
       longitude,
-      category: category || "Other",
+      category,
+      urgency,
     });
 
     res.status(201).json({
       success: true,
+      message: "Report created successfully",
       data: newReport,
     });
   } catch (error) {
     console.error("Error creating report:", error);
-
-    // Handle validation errors
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((val) => val.message);
       return res.status(400).json({
@@ -102,7 +89,6 @@ router.post("/report", async (req, res) => {
         message: messages.join(", "),
       });
     }
-
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -144,7 +130,7 @@ router.get("/report/:id", async (req, res) => {
 /**
  * @route   PUT /api/report/:id
  * @desc    Update a report's status
- * @access  Public (would be restricted in production)
+ * @access  Public
  */
 router.put("/report/:id", async (req, res) => {
   try {
@@ -172,6 +158,7 @@ router.put("/report/:id", async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Status updated successfully",
       data: updatedReport,
     });
   } catch (error) {
