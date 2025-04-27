@@ -42,8 +42,8 @@ Built using **React.js**, **React-Leaflet**, **Lucide Icons**, and **TailwindCSS
 Clone this repo and install dependencies:
 
 ```bash
-git clone https://github.com/your-username/crisis-map-app.git
-cd crisis-map-app
+git clone https://github.com/PrashantKhatiwada/pulsePoint.git
+cd pulsePoint
 npm install
 ```
 
