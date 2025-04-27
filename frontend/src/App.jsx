@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import MapView from "./components/MapView";
 import ReportForm from "./components/ReportForm";
@@ -11,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, RefreshCw, Menu, MapPin } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Menu, MapPin, X } from "lucide-react";
 
 function App() {
   const [reports, setReports] = useState([]);
@@ -55,7 +53,7 @@ function App() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="border-b bg-card shadow-sm z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -97,28 +95,10 @@ function App() {
         </div>
       </header>
 
-      {/* Mobile Tabs (visible on small screens) */}
-      <div className="md:hidden border-b">
-        <Tabs
-          defaultValue="map"
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="map">Map View</TabsTrigger>
-            <TabsTrigger value="list">List View</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
       {/* Main content */}
       <div className="flex-1 relative">
-        <div
-          className={`h-full ${
-            activeTab === "list" ? "hidden md:block" : "block"
-          }`}
-        >
+        {/* Map View - always visible and fills the screen */}
+        <div className="h-full w-full">
           <MapView
             reports={reports}
             loading={loading}
@@ -126,9 +106,25 @@ function App() {
           />
         </div>
 
+        {/* Mobile Tabs (visible on small screens) */}
+        <div className="md:hidden absolute top-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-b z-10">
+          <Tabs
+            defaultValue="map"
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="map">Map View</TabsTrigger>
+              <TabsTrigger value="list">List View</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {/* Mobile List View (shows instead of map on mobile when selected) */}
         <div
-          className={`h-full overflow-auto ${
-            activeTab === "map" ? "hidden md:hidden" : "block md:hidden"
+          className={`absolute inset-0 bg-background z-20 ${
+            activeTab === "map" ? "hidden" : "block md:hidden"
           }`}
         >
           <ReportsList
@@ -138,7 +134,7 @@ function App() {
           />
         </div>
 
-        {/* Floating action button */}
+        {/* Floating action button - always visible */}
         <motion.div
           className="absolute bottom-6 right-6 z-40"
           whileHover={{ scale: 1.05 }}
@@ -150,29 +146,19 @@ function App() {
             className="h-14 w-14 rounded-full shadow-lg"
           >
             {isFormOpen ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="h-6 w-6" />
             ) : (
               <Plus className="h-6 w-6" />
             )}
           </Button>
         </motion.div>
 
-        {/* Report form sheet */}
+        {/* Report form sheet - appears as overlay */}
         <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <SheetContent side="left" className="sm:max-w-md w-full p-0 border-0">
+          <SheetContent
+            side="left"
+            className="sm:max-w-md w-[90%] md:w-[450px] p-0 border-r shadow-xl"
+          >
             <ReportForm
               onReportAdded={handleReportAdded}
               onCancel={() => setIsFormOpen(false)}
@@ -181,11 +167,11 @@ function App() {
           </SheetContent>
         </Sheet>
 
-        {/* Reports sidebar sheet */}
+        {/* Reports sidebar sheet - appears as overlay */}
         <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <SheetContent
             side="right"
-            className="sm:max-w-md w-full p-0 border-0"
+            className="sm:max-w-md w-[90%] md:w-[450px] p-0 border-l shadow-xl"
           >
             <ReportsList
               reports={reports}
@@ -206,9 +192,50 @@ function App() {
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="border-t py-2 text-center text-sm text-muted-foreground">
-        PulsePoint Crisis Reporting System &copy; {new Date().getFullYear()}
+      {/* Enhanced Footer */}
+      <footer className="border-t py-4 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <div className="bg-primary p-1 rounded-full">
+                <MapPin className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="font-semibold">PulsePoint</span>
+            </div>
+
+            <div className="flex space-x-6">
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                About
+              </a>
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Privacy
+              </a>
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Terms
+              </a>
+              <a
+                href="#"
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Contact
+              </a>
+            </div>
+
+            <div className="text-sm text-muted-foreground">
+              &copy; {new Date().getFullYear()} PulsePoint Crisis Reporting
+              System
+            </div>
+          </div>
+        </div>
       </footer>
 
       <Toaster position="top-right" />
